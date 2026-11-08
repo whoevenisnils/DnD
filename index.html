@@ -3,800 +3,635 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>D&D DM-Steuerzentrale - Schattenwald</title>
-    <!-- Firebase Libraries für Cloud-Sync -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-
+    <title>D&D DM-Steuerzentrale – Schattenwald</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        discordBg: '#313338',
+                        discordSidebar: '#2b2d31',
+                        discordDark: '#1e1f22',
+                        discordBlurple: '#5865f2',
+                        discordGreen: '#23a55a',
+                        discordRed: '#da373d',
+                        discordText: '#dbdee1',
+                        discordMuted: '#949ba4'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg-dark: #1e1f22;
-            --bg-panel: #2b2d31;
-            --bg-card: #313338;
-            --accent-purple: #5865f2;
-            --accent-hover: #4752c4;
-            --text-main: #f2f3f5;
-            --text-muted: #949ba4;
-            --border-color: #3f4147;
-            --river-blue: #2b5c8f;
-            --sage-house: #8a2be2;
-            --puzzle-ruin: #e67e22;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'gg sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Sidebar Navigation */
-        .sidebar {
-            width: 240px;
-            background-color: var(--bg-panel);
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid var(--border-color);
-        }
-
-        .sidebar-header {
-            padding: 16px;
-            font-size: 18px;
-            font-weight: bold;
-            color: var(--accent-purple);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .nav-tabs {
-            display: flex;
-            flex-direction: column;
-            padding: 8px;
-            gap: 4px;
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 10px 12px;
-            border-radius: 4px;
-            text-align: left;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .tab-btn:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-            color: var(--text-main);
-        }
-
-        .tab-btn.active {
-            background-color: var(--accent-purple);
-            color: #ffffff;
-        }
-
-        .sync-status {
-            margin-top: auto;
-            padding: 12px;
-            font-size: 12px;
-            color: var(--text-muted);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #23a55a;
-        }
-
-        /* Main Content Area */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .tab-content {
-            display: none;
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .tab-content.active {
-            display: flex;
-            gap: 20px;
-        }
-
-        /* Dashboard & Grid Layout */
-        .map-section {
-            flex: 2;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .panel-section {
-            flex: 1;
-            background-color: var(--bg-panel);
-            border-radius: 8px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            border: 1px solid var(--border-color);
-            overflow-y: auto;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border-radius: 6px;
-            padding: 14px;
-            border: 1px solid var(--border-color);
-        }
-
-        .card-header {
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: var(--text-main);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* World Map 20x20 Grid */
-        .sector-view-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: var(--bg-panel);
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-
-        .sector-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: var(--accent-purple);
-        }
-
-        .grid-20x20 {
-            display: grid;
-            grid-template-columns: repeat(20, 22px);
-            grid-template-rows: repeat(20, 22px);
-            gap: 1px;
-            background-color: #111214;
-            padding: 4px;
-            border-radius: 4px;
-            border: 2px solid var(--border-color);
-        }
-
-        .grid-cell {
-            background-color: var(--bg-card);
-            border-radius: 1px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-        }
-
-        .grid-cell.river { background-color: var(--river-blue); }
-        .grid-cell.house { background-color: var(--sage-house); }
-        .grid-cell.ruin { background-color: var(--puzzle-ruin); }
-        .grid-cell.player { border: 2px solid #23a55a; background-color: rgba(35, 165, 90, 0.3); }
-
-        /* Navigation Controls */
-        .controls-nav {
-            display: grid;
-            grid-template-columns: repeat(3, 50px);
-            gap: 5px;
-            margin-top: 12px;
-            justify-content: center;
-        }
-
-        .btn-nav {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .btn-nav:hover {
-            background-color: var(--accent-purple);
-        }
-
-        /* Party Display below Map */
-        .party-status-bar {
-            display: flex;
-            gap: 10px;
-            background-color: var(--bg-panel);
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            overflow-x: auto;
-        }
-
-        .hero-mini-card {
-            background-color: var(--bg-card);
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            min-width: 150px;
-        }
-
-        .hero-name { font-weight: bold; font-size: 14px; color: var(--accent-purple); }
-        .hero-stats { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-
-        /* Buttons & Forms */
-        .btn {
-            background-color: var(--accent-purple);
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.2s;
-        }
-
-        .btn:hover { background-color: var(--accent-hover); }
-        .btn-danger { background-color: #da373c; }
-        .btn-danger:hover { background-color: #a1282c; }
-
-        input, select, textarea {
-            background-color: #1e1f22;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 8px;
-            border-radius: 4px;
-            width: 100%;
-            margin-top: 4px;
-        }
-
-        /* General Tab Styling */
-        .full-width-tab {
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .class-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-        }
+        body { background-color: #1e1f22; color: #dbdee1; font-family: 'gg sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        .canvas-grid { background-color: #111214; background-image: radial-gradient(#2b2d31 1px, transparent 1px); background-size: 15px 15px; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #2b2d31; }
+        ::-webkit-scrollbar-thumb { background: #1a1b1e; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #5865f2; }
     </style>
 </head>
-<body>
+<body class="h-screen flex flex-col overflow-hidden select-none">
 
-    <!-- Sidebar Navigation -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <span>🛡️ DM-Steuerzentrale</span>
+    <!-- Top Header -->
+    <header class="bg-discordSidebar px-4 py-3 flex justify-between items-center border-b border-black/40 shadow-md z-10">
+        <div class="flex items-center space-x-3">
+            <span class="text-2xl">🌲</span>
+            <div>
+                <h1 class="font-bold text-white leading-tight text-lg">DM-Steuerzentrale: Schattenwald</h1>
+                <p class="text-xs text-discordMuted">Kampagne: Das schlafende Herz & 4 Rätsel-Ruinen</p>
+            </div>
         </div>
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('map-tab')">🗺️ 20x20 Weltkarte</button>
-            <button class="tab-btn" onclick="switchTab('chars-tab')">👥 Charaktere & Klassen</button>
-            <button class="tab-btn" onclick="switchTab('loot-tab')">💎 Loot- & Beute-Pools</button>
-            <button class="tab-btn" onclick="switchTab('notes-tab')">📜 Hauptplot & Spickzettel</button>
+        <div class="flex items-center space-x-4 bg-discordDark px-3 py-1.5 rounded-lg border border-white/5">
+            <div class="text-xs">
+                <span class="text-discordMuted">Ingame Zeit:</span>
+                <span id="clock-display" class="font-mono text-discordBlurple font-bold ml-1">Tag 1 - 00:00 Uhr</span>
+            </div>
+            <button onclick="advanceTime(1)" class="bg-discordBlurple hover:bg-opacity-80 text-white text-xs px-2 py-1 rounded transition">+1 Std</button>
+            <button onclick="advanceTime(8)" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-2 py-1 rounded transition">8 Std Rast</button>
         </div>
-        <div class="sync-status">
-            <div class="status-dot"></div>
-            <span>Firebase Cloud Synchronisiert</span>
-        </div>
-    </div>
+    </header>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        
-        <!-- MAP TAB -->
-        <div id="map-tab" class="tab-content active">
-            <div class="map-section">
-                <div class="sector-view-container">
-                    <div id="sector-coordinates" class="sector-title">Sektor [X: 1, Y: 0] - Schattenwald</div>
-                    <!-- 20x20 World Map Grid View -->
-                    <div id="world-map-grid" class="grid-20x20"></div>
-                    
-                    <!-- 4-Button Movement Controls -->
-                    <div class="controls-nav">
-                        <div></div>
-                        <button class="btn-nav" onclick="moveSector(0, -1)">⬆️</button>
-                        <div></div>
-                        <button class="btn-nav" onclick="moveSector(-1, 0)">⬅️</button>
-                        <div></div>
-                        <button class="btn-nav" onclick="moveSector(1, 0)">➡️</button>
-                        <div></div>
-                        <button class="btn-nav" onclick="moveSector(0, 1)">⬇️</button>
-                        <div></div>
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <nav class="w-64 bg-discordSidebar flex flex-col border-r border-black/30 p-2 space-y-1">
+            <button onclick="switchTab('map')" id="btn-tab-map" class="tab-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left text-sm font-medium transition bg-discordBlurple text-white">
+                <span>🗺️</span> <span>Sektor-Karte (20x20)</span>
+            </button>
+            <button onclick="switchTab('chars')" id="btn-tab-chars" class="tab-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left text-sm font-medium transition hover:bg-white/5 text-discordMuted">
+                <span>⚔️</span> <span>Helden & Klassen</span>
+            </button>
+            <button onclick="switchTab('loot')" id="btn-tab-loot" class="tab-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left text-sm font-medium transition hover:bg-white/5 text-discordMuted">
+                <span>💎</span> <span>Beute & Loot-Pools</span>
+            </button>
+            <button onclick="switchTab('notes')" id="btn-tab-notes" class="tab-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left text-sm font-medium transition hover:bg-white/5 text-discordMuted">
+                <span>📜</span> <span>Haupt-Plot & Spickzettel</span>
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 bg-discordBg flex overflow-hidden">
+            
+            <!-- TAB 1: SEKTOR-KARTE & UMBEGEBUNGS-VORSCHAU -->
+            <div id="tab-map" class="tab-content flex-1 flex p-4 gap-4 overflow-hidden">
+                <!-- Links: Haupt-Sektor (15x15 Canvas) + Navigation -->
+                <div class="flex-1 flex flex-col bg-discordDark p-4 rounded-xl border border-white/5 shadow-lg overflow-y-auto">
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <h2 class="font-bold text-white text-lg">Aktueller Sektor [<span id="sector-coords">X: 1, Y: 1</span>]</h2>
+                            <p class="text-xs text-discordMuted">1 Schritt = 1 Sektor-Wechsel (15x15 Raster)</p>
+                        </div>
+                        <button onclick="regenerateWorld()" class="bg-discordRed hover:opacity-90 text-white text-xs px-3 py-1.5 rounded font-semibold transition">
+                            🔄 Welt neu generieren
+                        </button>
+                    </div>
+
+                    <!-- Main Grid Canvas -->
+                    <div class="flex justify-center items-center my-auto">
+                        <canvas id="sectorCanvas" width="450" height="450" class="border border-discordBlurple/40 rounded-lg shadow-inner bg-black/40"></canvas>
+                    </div>
+
+                    <!-- Richtungs-Steuerung -->
+                    <div class="flex justify-center items-center space-x-2 my-4">
+                        <div class="grid grid-cols-3 gap-2 w-48 text-center">
+                            <div></div>
+                            <button onclick="moveSector(0, -1)" class="bg-discordBlurple hover:bg-opacity-80 text-white font-bold py-2 rounded shadow">⬆️ N</button>
+                            <div></div>
+                            <button onclick="moveSector(-1, 0)" class="bg-discordBlurple hover:bg-opacity-80 text-white font-bold py-2 rounded shadow">⬅️ W</button>
+                            <div class="flex justify-center items-center bg-discordBg rounded text-xs text-discordMuted font-mono">Move</div>
+                            <button onclick="moveSector(1, 0)" class="bg-discordBlurple hover:bg-opacity-80 text-white font-bold py-2 rounded shadow">➡️ O</button>
+                            <div></div>
+                            <button onclick="moveSector(0, 1)" class="bg-discordBlurple hover:bg-opacity-80 text-white font-bold py-2 rounded shadow">⬇️ S</button>
+                            <div></div>
+                        </div>
+                    </div>
+
+                    <!-- Nachbar-Sektoren Vorschau (Norden, Süden, Westen, Osten) -->
+                    <div class="mt-2 border-t border-white/10 pt-3">
+                        <h4 class="text-xs font-bold text-discordMuted uppercase tracking-wider mb-2">Umgebungs-Sektoren Vorschau</h4>
+                        <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                            <div class="bg-discordBg p-2 rounded border border-white/5">
+                                <span class="block text-discordMuted font-bold">Norden</span>
+                                <span id="preview-n" class="text-white">...</span>
+                            </div>
+                            <div class="bg-discordBg p-2 rounded border border-white/5">
+                                <span class="block text-discordMuted font-bold">Osten</span>
+                                <span id="preview-o" class="text-white">...</span>
+                            </div>
+                            <div class="bg-discordBg p-2 rounded border border-white/5">
+                                <span class="block text-discordMuted font-bold">Süden</span>
+                                <span id="preview-s" class="text-white">...</span>
+                            </div>
+                            <div class="bg-discordBg p-2 rounded border border-white/5">
+                                <span class="block text-discordMuted font-bold">Westen</span>
+                                <span id="preview-w" class="text-white">...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aktive Helden-Leiste unten -->
+                    <div class="mt-4 bg-discordBg p-3 rounded-lg border border-white/5">
+                        <h4 class="text-xs font-bold text-discordMuted uppercase mb-2">Heldengruppe Status</h4>
+                        <div id="party-map-bar" class="flex flex-wrap gap-3 text-xs">
+                            <span class="text-discordMuted italic">Keine Helden erstellt.</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Active Party Display below Map -->
-                <div class="card">
-                    <div class="card-header">Aktive Helden-Gruppe</div>
-                    <div id="party-mini-list" class="party-status-bar">
-                        <!-- Filled by JS -->
+                <!-- Rechts: Sektor-Event Details & Interaktionen -->
+                <div class="w-96 bg-discordDark p-4 rounded-xl border border-white/5 shadow-lg flex flex-col overflow-y-auto">
+                    <h3 class="font-bold text-white border-b border-white/10 pb-2 mb-3">Sektor-Inspektion</h3>
+                    <div id="sector-event-panel" class="flex-1 space-y-4">
+                        <p class="text-sm text-discordMuted italic">Bewege dich auf der Karte, um Events zu entdecken.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Inspector Panel -->
-            <div class="panel-section">
-                <div class="card">
-                    <div class="card-header">Sektor-Inspektor</div>
-                    <div id="sector-event-details" style="font-size: 14px; color: var(--text-muted);">
-                        Sektor wird erkundet...
-                    </div>
-                </div>
-
-                <!-- Combat / NPC / Shop Panel -->
-                <div id="dynamic-interaction-panel" class="card">
-                    <div class="card-header">Interaktion</div>
-                    <div id="interaction-content">Keine Begegnung in diesem Sektor.</div>
-                </div>
-
-                <button class="btn btn-danger" onclick="regenerateWorld()">🌍 Welt Neu Generieren</button>
-            </div>
-        </div>
-
-        <!-- CHARACTERS TAB -->
-        <div id="chars-tab" class="tab-content full-width-tab">
-            <div class="card">
-                <div class="card-header">Neuen Helden erstellen</div>
-                <div style="display: flex; gap: 10px; align-items: flex-end;">
-                    <div style="flex: 1;">
-                        <label>Charaktername:</label>
-                        <input type="text" id="new-char-name" placeholder="z. B. Thorin Eichenschild">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>Klassenwahl:</label>
-                        <select id="new-char-class">
-                            <option value="Krieger">Krieger (Tank/Nahkampf)</option>
-                            <option value="Magier">Magier (Schaden/Zauber)</option>
-                            <option value="Schurke">Schurke (Heimlichkeit/Schaden)</option>
-                            <option value="Kleriker">Kleriker (Heilung/Support)</option>
-                            <option value="Waldläufer">Waldläufer (Fernkampf/Natur)</option>
-                            <option value="Barde">Barde (Buffs/Sozial)</option>
+            <!-- TAB 2: HELDEN & KLASSEN -->
+            <div id="tab-chars" class="tab-content hidden flex-1 p-6 overflow-y-auto space-y-6">
+                <!-- Erstellung -->
+                <div class="bg-discordDark p-5 rounded-xl border border-white/5">
+                    <h2 class="font-bold text-white text-lg mb-4">Neuen Helden Erstellen</h2>
+                    <div class="grid grid-cols-3 gap-4">
+                        <input type="text" id="new-char-name" placeholder="Charakter Name..." class="bg-discordBg text-white px-3 py-2 rounded border border-white/10 text-sm focus:outline-none focus:border-discordBlurple">
+                        <select id="new-char-class" class="bg-discordBg text-white px-3 py-2 rounded border border-white/10 text-sm focus:outline-none focus:border-discordBlurple">
+                            <option value="Krieger">Krieger (Tank / Nahkampf)</option>
+                            <option value="Magier">Magier (Schaden / Zauber)</option>
+                            <option value="Schurke">Schurke (Krit / Nahkampf)</option>
+                            <option value="Kleriker">Kleriker (Heilung / Support)</option>
+                            <option value="Waldläufer">Waldläufer (Fernkampf)</option>
+                            <option value="Barde">Barde (Support / Auren)</option>
                         </select>
-                    </div>
-                    <button class="btn" onclick="createCharacter()">Helden Erstellen</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">Klassen-Gesamtübersicht (Was bedeutet AC?)</div>
-                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-                    <strong>AC (Armor Class / Rüstungsklasse):</strong> Der Wert, den ein Gegner mindestens würfeln muss, um einen Treffer zu landen.
-                </p>
-                <div class="class-grid" id="class-overview-grid">
-                    <!-- Class Cards generated by JS -->
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">Erstellte Helden</div>
-                <div id="character-full-list" style="display: flex; flex-direction: column; gap: 10px;">
-                    <!-- Filled by JS -->
-                </div>
-            </div>
-        </div>
-
-        <!-- LOOT TAB -->
-        <div id="loot-tab" class="tab-content full-width-tab">
-            <div style="display: flex; gap: 15px;">
-                <div class="card" style="flex: 1;">
-                    <div class="card-header">Beute-Generator</div>
-                    <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-                        <button class="btn" onclick="generateLoot('mob')">⚔️ Mob Beute</button>
-                        <button class="btn" onclick="generateLoot('chest')">📦 Kisten Beute</button>
-                        <button class="btn" onclick="generateLoot('npc')">🎁 NPC Belohnung</button>
-                    </div>
-                    <div id="generated-loot-result" style="font-size: 16px; font-weight: bold; color: var(--accent-purple);">
-                        Klicke einen Generator-Button!
+                        <button onclick="createCharacter()" class="bg-discordGreen hover:opacity-90 text-white font-bold py-2 rounded text-sm transition">
+                            ➕ Charakter Erstellen
+                        </button>
                     </div>
                 </div>
 
-                <div class="card" style="flex: 1;">
-                    <div class="card-header">Loot-Pools (Editierbar)</div>
-                    <label>Ziel-Pool auswählen:</label>
-                    <select id="loot-pool-select" onchange="loadSelectedPool()">
-                        <option value="mobs">Mob Loot</option>
-                        <option value="chests">Kisten Loot</option>
-                        <option value="npcs">NPC Rewards</option>
-                        <option value="shop">Shop Angebote</option>
-                    </select>
-                    <textarea id="loot-pool-editor" rows="6" style="margin-top: 10px;"></textarea>
-                    <button class="btn" style="margin-top: 8px;" onclick="saveSelectedPool()">Pool Speichern</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- NOTES & STORY TAB -->
-        <div id="notes-tab" class="tab-content full-width-tab">
-            <div class="card">
-                <div class="card-header">📖 Hauptplot: Der Fluch des schlafenden Herzens</div>
-                <div style="font-size: 14px; line-height: 1.6; color: var(--text-main);">
-                    <p>Im ruhigen Dorf Erlenhain lebte der alte Weise <strong>Oromis</strong>. Vor wenigen Tagen drang eine dunkle Seuche in den Schattenwald ein. Oromis besaß die einzige uralte Karte, die den Weg zur Quelle des Fluchs weist. Doch sein Haus am Rande des Waldes ist nun von magischen Schatten versiegelt.</p>
-                    <br>
-                    <p>Um das Siegel des Weisenhauses zu brechen und die Karte aus seinem Tresor zu bergen, müssen die Helden <strong>4 Rätsel-Ruinen</strong> im tiefen Schattenwald finden und die darin verborgenen Schlüssel-Fragmente erlangen.</p>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">⚡ D&D 5e Schnellregeln & Zustände</div>
-                <div style="display: flex; gap: 20px; font-size: 13px;">
-                    <div style="flex: 1;">
-                        <strong>Trank-Buffs (8 Ingame-Stunden):</strong>
-                        <ul>
-                            <li>🧪 <strong>Stärke-Trank:</strong> +2 auf Angriffswürfe.</li>
-                            <li>🧪 <strong>Schnelligkeits-Trank:</strong> +2 auf Rüstungsklasse (AC).</li>
-                            <li>🧪 <strong>Resistenz-Trank:</strong> Halbiert den erlittenen Schaden.</li>
-                        </ul>
-                    </div>
-                    <div style="flex: 1;">
-                        <strong>Party-Spiele (NPC Quests):</strong>
-                        <ul>
-                            <li>🎭 <strong>Pantomime:</strong> Aktion ohne Worte darstellen.</li>
-                            <li>🗣️ <strong>Wort umschreiben:</strong> Begriff ohne Tabuwörter erklären.</li>
-                            <li>🎨 <strong>Malen:</strong> Zeichnen auf Papier/Canvas.</li>
-                            <li>🎵 <strong>Song summen:</strong> Melodie summen & erraten.</li>
-                        </ul>
+                <!-- Aktive Helden Liste -->
+                <div class="bg-discordDark p-5 rounded-xl border border-white/5">
+                    <h3 class="font-bold text-white text-md mb-3">Aktive Helden der Gruppe</h3>
+                    <div id="character-cards-container" class="grid grid-cols-2 gap-4">
+                        <span class="text-sm text-discordMuted italic col-span-2">Noch keine Helden angelegt.</span>
                     </div>
                 </div>
-            </div>
-        </div>
 
+                <!-- Klassen Gesamtübersicht & AC Erklärung -->
+                <div class="bg-discordDark p-5 rounded-xl border border-white/5 space-y-4">
+                    <h3 class="font-bold text-white text-md border-b border-white/10 pb-2">Klassen-Übersicht & D&D Begriffe</h3>
+                    
+                    <div class="bg-discordBlurple/10 border border-discordBlurple/30 p-3 rounded-lg text-xs text-discordText">
+                        <span class="font-bold text-discordBlurple">Was bedeutet AC (Armor Class / Rüstungsklasse)?</span><br>
+                        Die AC gibt an, wie schwer ein Charakter zu treffen ist. Ein Angreifer muss mit dem d20 einen Wert würfeln, der <strong>gleich oder höher</strong> als die AC des Ziels ist, um Schaden zu verursachen!
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3 text-xs">
+                        <div class="bg-discordBg p-3 rounded border border-white/5">
+                            <span class="font-bold text-discordGreen text-sm block">🛡️ Krieger</span>
+                            <span class="text-discordMuted block">HP: 12 | AC: 16</span>
+                            <p class="mt-1">Starker Nahkämpfer. Startet mit Schwert (1d8), Heiltrank und Schild-Buff (+2 AC).</p>
+                        </div>
+                        <div class="bg-discordBg p-3 rounded border border-white/5">
+                            <span class="font-bold text-purple-400 text-sm block">🔮 Magier</span>
+                            <span class="text-discordMuted block">HP: 6 | AC: 11</span>
+                            <p class="mt-1">Fernkampf-Magie. Startet mit Feuerball (1d10), Heiltrank und Schild-Zauber.</p>
+                        </div>
+                        <div class="bg-discordBg p-3 rounded border border-white/5">
+                            <span class="font-bold text-amber-400 text-sm block">🗡️ Schurke</span>
+                            <span class="text-discordMuted block">HP: 8 | AC: 14</span>
+                            <p class="mt-1">Schnelle Klingen. Startet mit Dolch (1d6), Heiltrank und Rauchbombe.</p>
+                        </div>
+                        <div class="bg-discordBg p-3 rounded border border-white/5">
+                            <span class="font-bold text-cyan-400 text-sm block">✨ Kleriker</span>
+                            <span class="text-discordMuted block">HP: 10 | AC: 15</span>
+                            <p class="mt-1">Heiler der Gruppe. Startet mit Keule (1d6), Segens-Spruch und Gruppenheilung.</p>
+                        </div>
+                        <div class="bg-discordBg p-3 rounded border border-white/5">
+                            <span class="font-bold text-emerald-400 text-sm block">🏹 Waldläufer</span>
+                            <span class="text-discordMuted block">HP: 10 | AC: 14</span>
+                            <p class="mt-1">Präziser Schütze. Startet mit Langbogen (1d8), Heiltrank und Kräutersalbe.</p>
+                        </div>
+                        <div class="bg-discordBg p-3 rounded border border-white/5">
+                            <span class="font-bold text-pink-400 text-sm block">🎵 Barde</span>
+                            <span class="text-discordMuted block">HP: 8 | AC: 13</span>
+                            <p class="mt-1">Unterstützer. Startet mit Rapier (1d6), Inspirations-Lied und Trank.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: BEUTE & LOOT-POOLS -->
+            <div id="tab-loot" class="tab-content hidden flex-1 p-6 overflow-y-auto space-y-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <!-- Loot-Generatoren -->
+                    <div class="bg-discordDark p-5 rounded-xl border border-white/5 space-y-4">
+                        <h3 class="font-bold text-white text-md">Loot-Generator</h3>
+                        <div class="space-y-2">
+                            <button onclick="generateLoot('mob')" class="w-full bg-discordBlurple hover:opacity-90 text-white font-bold py-2 rounded text-sm transition">
+                                👾 Mob-Beute generieren
+                            </button>
+                            <button onclick="generateLoot('chest')" class="w-full bg-amber-600 hover:opacity-90 text-white font-bold py-2 rounded text-sm transition">
+                                📦 Kisten-Beute generieren
+                            </button>
+                            <button onclick="generateLoot('npc')" class="w-full bg-discordGreen hover:opacity-90 text-white font-bold py-2 rounded text-sm transition">
+                                🎁 NPC-Belohnung generieren
+                            </button>
+                        </div>
+                        <div id="loot-result" class="bg-discordBg p-3 rounded border border-white/5 text-sm text-discordText min-h-[60px] flex items-center justify-center text-center">
+                            Klicke auf einen Button, um Beute zu erzeugen.
+                        </div>
+                    </div>
+
+                    <!-- Editierbare Loot-Pools -->
+                    <div class="bg-discordDark p-5 rounded-xl border border-white/5 space-y-3">
+                        <h3 class="font-bold text-white text-md">Aktiver Loot-Pool (Verwaltbar)</h3>
+                        <div class="flex space-x-2">
+                            <input type="text" id="new-pool-item" placeholder="Neues Item..." class="flex-1 bg-discordBg text-white px-3 py-1.5 rounded border border-white/10 text-xs">
+                            <button onclick="addPoolItem()" class="bg-discordGreen text-white px-3 py-1.5 rounded text-xs font-bold">Hinzufügen</button>
+                        </div>
+                        <div id="loot-pool-list" class="bg-discordBg p-3 rounded border border-white/5 text-xs space-y-1 max-h-48 overflow-y-auto">
+                            <!-- Items -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: HAUPT-PLOT & SPICKZETTEL -->
+            <div id="tab-notes" class="tab-content hidden flex-1 p-6 overflow-y-auto space-y-6">
+                <!-- Vorgeschichte -->
+                <div class="bg-discordDark p-5 rounded-xl border border-white/5 space-y-3">
+                    <h3 class="font-bold text-discordBlurple text-lg">📜 Kampagnen-Vorgeschichte: Das schlafende Herz</h3>
+                    <p class="text-sm leading-relaxed text-discordText">
+                        Euer Heimatdorf Eldenbrook lebte Jahrzehnte in Frieden. Doch nun zieht eine dunkle Fäulnis durch den Schattenwald. 
+                        Der weise Mann Alistair, Hüter des Dorfes, besaß eine uralte Schatzkarte, die den Weg zur Quelle des Fluchs zeigt. 
+                        Doch Alistair ist spurlos verschwunden, und sein Haus tief im Schattenwald wurde von magischen Barrikaden umschlossen.
+                    </p>
+                    <p class="text-sm leading-relaxed text-discordText">
+                        <strong>Euer Ziel:</strong> Findet die 4 Rätsel-Ruinen im Wald, um die Siegel-Fragmente zu bergen. Nur mit allen 4 Fragmenten öffnet sich der Tresor in Alistairs Haus, um die Schatzkarte freizugeben und den Schattenwald zu retten!
+                    </p>
+                </div>
+
+                <!-- DM Kurzregeln -->
+                <div class="bg-discordDark p-5 rounded-xl border border-white/5 space-y-3">
+                    <h3 class="font-bold text-white text-md">D&D 5e DM Spickzettel & Effekte</h3>
+                    <div class="grid grid-cols-2 gap-4 text-xs">
+                        <div class="bg-discordBg p-3 rounded border border-white/5">
+                            <span class="font-bold text-discordBlurple block mb-1">Aktionen im Kampf</span>
+                            <ul class="list-disc list-inside space-y-1 text-discordMuted">
+                                <li><strong>Angreifen:</strong> d20 + Bonus vs. Gegner AC.</li>
+                                <li><strong>Zaubern:</strong> Zauber wirken laut Beschreibung.</li>
+                                <li><strong>Das Kissen / Ausweichen:</strong> Angriffe gegen dich haben Nachteil.</li>
+                                <li><strong>Helfen:</strong> Gibt Mitspieler Vorteil auf den nächsten Wurf.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-discordBg p-3 rounded border border-white/5">
+                            <span class="font-bold text-amber-400 block mb-1">Zustände & Effekte</span>
+                            <ul class="list-disc list-inside space-y-1 text-discordMuted">
+                                <li><strong>Vergiftet:</strong> Nachteil auf Angriffswürfe.</li>
+                                <li><strong>Betäubt:</strong> Kann keine Aktionen ausführen, Angriffe haben Vorteil.</li>
+                                <li><strong>Trank-Buffs:</strong> Halten exakt 8 Ingame-Stunden an.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
     </div>
 
+    <!-- JavaScript Logik -->
     <script>
-        // Global Game State
-        let gameState = {
-            playerX: 1,
-            playerY: 0,
-            worldGridSize: 20,
-            sageHouse: { x: 10, y: 10 },
-            ruins: [
-                { x: 3, y: 4, solved: false },
-                { x: 16, y: 3, solved: false },
-                { x: 5, y: 15, solved: false },
-                { x: 14, y: 17, solved: false }
-            ],
-            characters: [
-                { id: 1, name: 'Valeros', class: 'Krieger', hp: 28, maxHp: 28, ac: 16, currency: 15, inventory: ['Langsperre', 'Heiltrank'] }
-            ],
-            time: 0,
-            lootPools: {
-                mobs: ['Wolfsfell', 'Schattenharz-Splitter (1 💧)', 'Goblin-Dolch', 'Giftzahn'],
-                chests: ['Großer Elfen-Tropfen Beutel (5 💧)', 'Trank der Stärke (8h)', 'Trank der Schnelligkeit (8h)', 'Runenschwert (1d10)'],
-                npcs: ['Elfen-Tropfen (3 💧)', 'Wundsalbe', 'Karte der Ruinen', 'Trank der Resistenz (8h)'],
-                shop: ['Heiltrank (5 💧)', 'Elfen-Bogen (1d8+2) (12 💧)', 'Trank der Stärke (8 💧)']
-            }
+        // GLOBALE VARIABLEN & STATS
+        const GRID_SIZE = 20;
+        let playerPos = { x: 1, y: 1 };
+        let ingameTimeHours = 0;
+        let characters = [];
+        let mapData = [];
+
+        // LOOT POOLS
+        let lootPools = {
+            mob: ["Wolfsfell", "Schattenharz (2💧)", "Giftzahn", "Kleiner Elfen-Tropfen Beutel (3💧)"],
+            chest: ["Heiltrank (1d4+2)", "Trank der Stärke (+2 Atk, 8h)", "Runenschwert (1d10)", "Großer Elfen-Tropfen Beutel (5💧)"],
+            npc: ["Magisches Amulett", "Elfen-Bogen (1d8+2)", "Schattenharz (5💧)"]
         };
 
-        const classDefs = {
-            'Krieger': { hp: 28, ac: 16, desc: 'Waffenausbildung, hoher Rüstungsschutz, Nahkampf-Experte.', gear: ['Schwert', 'Schild', 'Kettenpanzer'] },
-            'Magier': { hp: 16, ac: 12, desc: 'Meister der arkanen Künste, mächtige Flächenzauber.', gear: ['Zauberstab', 'Spruchbuch', 'Stoffrobe'] },
-            'Schurke': { hp: 20, ac: 14, desc: 'Flink, heimlich, verursacht kritischen Hinterhalts-Schaden.', gear: ['2x Dolche', 'Diebeswerkzeug', 'Lederrüstung'] },
-            'Kleriker': { hp: 24, ac: 15, desc: 'Göttliche Heilung und Schutzmagie an vorderster Front.', gear: ['Morgenstern', 'Heiliges Symbol', 'Schuppenpanzer'] },
-            'Waldläufer': { hp: 22, ac: 15, desc: 'Fernkampf-Spezialist und Überlebenskünstler im Schattenwald.', gear: ['Langbogen', 'Kurzschwert', 'Fellrüstung'] },
-            'Barde': { hp: 20, ac: 13, desc: 'Unterstützt die Gruppe mit Liedern, Buffs und Verführung.', gear: ['Laute', 'Rapier', 'Lederwams'] }
-        };
+        // QUEST POOLS
+        const npcQuestTypes = [
+            { type: "Pantomime", desc: "Spiele eine Aktion stumm vor, die die Gruppe erraten muss!" },
+            { type: "Wort umschreiben", desc: "Erkläre den Begriff 'Schattenwald', ohne die Wörter 'Baum', 'Dunkel' oder 'Wald' zu nutzen!" },
+            { type: "Malen", desc: "Zeichne auf ein Blatt Papier das Monster, das dich zuletzt angegriffen hat!" },
+            { type: "Song summen", desc: "Summe eine Melodie, die deine Mitspieler erraten müssen!" }
+        ];
 
-        // Firebase Initialization (Fallback for offline execution)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDemoKeyOnlyReplaceWithYours",
-            authDomain: "dnd-demo.firebaseapp.com",
-            projectId: "dnd-demo",
-            storageBucket: "dnd-demo.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:demo"
-        };
-        
-        try {
-            firebase.initializeApp(firebaseConfig);
-        } catch(e) {
-            console.log("Firebase runs in local mode.");
-        }
-
+        // INITIALISIERUNG
         window.onload = function() {
-            renderClassOverview();
-            drawWorldMapGrid();
-            renderPartyStatus();
-            renderCharacterList();
-            loadSelectedPool();
-            inspectSector();
+            initWorldMap();
+            drawSectorGrid();
+            updatePreviews();
+            renderCharacters();
+            renderLootPoolList();
         };
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-
-            event.target.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
-        }
-
-        // Complete 20x20 World Map Grid Rendering
-        function drawWorldMapGrid() {
-            const container = document.getElementById('world-map-grid');
-            container.innerHTML = '';
-
-            document.getElementById('sector-coordinates').innerText = 
-                `Sektor [X: ${gameState.playerX}, Y: ${gameState.playerY}] - Schattenwald`;
-
-            for (let y = 0; y < gameState.worldGridSize; y++) {
-                for (let x = 0; x < gameState.worldGridSize; x++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'grid-cell';
-
-                    const isRiver = (x === 0);
-                    const isHouse = (x === gameState.sageHouse.x && y === gameState.sageHouse.y);
-                    const isRuin = gameState.ruins.some(r => r.x === x && r.y === y);
-                    const isPlayer = (x === gameState.playerX && y === gameState.playerY);
-
-                    if (isRiver) {
-                        cell.classList.add('river');
+        // SEKTOR-KARTE GENERIEREN (20x20)
+        function initWorldMap() {
+            mapData = [];
+            for (let x = 0; x < GRID_SIZE; x++) {
+                mapData[x] = [];
+                for (let y = 0; y < GRID_SIZE; y++) {
+                    if (x === 0) {
+                        mapData[x][y] = { type: 'river', name: 'Reißender Fluss' };
+                    } else {
+                        mapData[x][y] = { type: 'forest', name: 'Dichter Schattenwald' };
                     }
-                    if (isHouse) {
-                        cell.classList.add('house');
-                        cell.innerText = '🏠';
-                    }
-                    if (isRuin) {
-                        cell.classList.add('ruin');
-                        cell.innerText = '🏛️';
-                    }
-                    if (isPlayer) {
-                        cell.classList.add('player');
-                        cell.innerText = '⚔️';
-                    }
-
-                    container.appendChild(cell);
                 }
             }
-        }
-
-        // Movement with 4 Buttons
-        function moveSector(dx, dy) {
-            const newX = gameState.playerX + dx;
-            const newY = gameState.playerY + dy;
-
-            if (newX < 0 || newX >= gameState.worldGridSize || newY < 0 || newY >= gameState.worldGridSize) {
-                alert("Du erreichst das Ende des bekannten Schattenwalds!");
-                return;
-            }
-
-            if (newX === 0) {
-                alert("Der reißende Fluss auf der linken Seite ist unüberwindbar!");
-                return;
-            }
-
-            gameState.playerX = newX;
-            gameState.playerY = newY;
-
-            drawWorldMapGrid();
-            inspectSector();
-        }
-
-        function inspectSector() {
-            const details = document.getElementById('sector-event-details');
-            const interaction = document.getElementById('interaction-content');
-
-            if (gameState.playerX === gameState.sageHouse.x && gameState.playerY === gameState.sageHouse.y) {
-                details.innerText = "Das Haus des Weisen Oromis. Es ist von dunklen Schattensiegeln umgeben.";
-                interaction.innerHTML = `
-                    <p><strong>Tresor der Schatzkarte:</strong></p>
-                    <p>Gelöste Ruinen-Fragmente: ${gameState.ruins.filter(r => r.solved).length} / 4</p>
-                    <button class="btn" style="margin-top:8px;" onclick="tryOpenVault()">Tresor Öffnen</button>
-                `;
-                return;
-            }
-
-            const ruinIndex = gameState.ruins.findIndex(r => r.x === gameState.playerX && r.y === gameState.playerY);
-            if (ruinIndex !== -1) {
-                const ruin = gameState.ruins[ruinIndex];
-                details.innerText = "Eine uralte Rätsel-Ruine der Waldläufer.";
-                if (ruin.solved) {
-                    interaction.innerText = "Diese Ruine wurde bereits gelöst und das Fragment geborgen.";
-                } else {
-                    interaction.innerHTML = `
-                        <p><strong>Rätsel-Aufgabe:</strong></p>
-                        <p><i>"Was hat Wurzeln, die keiner sieht, ist höher als Bäume und wächst doch nie?"</i></p>
-                        <button class="btn" onclick="solveRuin(${ruinIndex}, 'Berg')">Antwort: Der Berg</button>
-                        <button class="btn" onclick="solveRuin(${ruinIndex}, 'Wind')">Antwort: Der Wind</button>
-                    `;
-                }
-                return;
-            }
-
-            // Normal Forest Sector
-            details.innerText = "Ein dichter Bereich des Schattenwalds. Hohe Weiden verbergen Sicht und Geräusche.";
-            interaction.innerHTML = `
-                <p>Gegner-Begegnung: <strong>Schatten-Wolf</strong></p>
-                <p>HP: 14 | AC: 12</p>
-                <button class="btn" style="margin-top:6px;" onclick="attackMonster(14)">⚔️ Angreifen (1d8 Würfeln)</button>
-            `;
-        }
-
-        function tryOpenVault() {
-            const solvedCount = gameState.ruins.filter(r => r.solved).length;
-            if (solvedCount === 4) {
-                alert("🎉 Der Tresor öffnet sich! Ihr habt die Schatzkarte des Weisen Oromis geborgen und die Kampagne gewonnen!");
-            } else {
-                alert(`Der Tresor bleibt verschlossen. Euch fehlen noch ${4 - solvedCount} Fragmente aus den Ruinen!`);
-            }
-        }
-
-        function solveRuin(index, answer) {
-            if (answer === 'Berg') {
-                gameState.ruins[index].solved = true;
-                alert("✨ Richtig! Das Schattensiegel bricht und ihr erhaltet ein Fragment!");
-                inspectSector();
-            } else {
-                alert("❌ Falsch! Ein magischer Impuls trifft die Gruppe für 3 Schaden.");
-            }
-        }
-
-        function attackMonster(monsterHp) {
-            const dmg = Math.floor(Math.random() * 8) + 1;
-            alert(`⚔️ Du greifst an und verursachst ${dmg} Schaden!`);
-            if (dmg >= monsterHp) {
-                alert("💥 Der Schatten-Wolf wurde besiegt! Beute erhalten.");
-                generateLoot('mob');
-            }
+            // Haus des Weisen & 4 Ruinen platzieren
+            mapData[10][10] = { type: 'house', name: 'Haus des weisen Mannes' };
+            mapData[4][4] = { type: 'ruin', name: 'Rätsel-Ruine Alpha', solved: false };
+            mapData[15][5] = { type: 'ruin', name: 'Rätsel-Ruine Beta', solved: false };
+            mapData[5][15] = { type: 'ruin', name: 'Rätsel-Ruine Gamma', solved: false };
+            mapData[16][16] = { type: 'ruin', name: 'Rätsel-Ruine Delta', solved: false };
+            mapData[3][8] = { type: 'shop', name: 'Wald-Händler' };
+            mapData[8][3] = { type: 'monster', name: 'Schatten-Wolf', hp: 14, ac: 12 };
+            mapData[12][14] = { type: 'npc', name: 'Einsiedler Elric' };
         }
 
         function regenerateWorld() {
-            gameState.sageHouse = {
-                x: Math.floor(Math.random() * 18) + 1,
-                y: Math.floor(Math.random() * 18) + 1
-            };
-            gameState.ruins = [];
-            for (let i = 0; i < 4; i++) {
-                gameState.ruins.push({
-                    x: Math.floor(Math.random() * 18) + 1,
-                    y: Math.floor(Math.random() * 18) + 1,
-                    solved: false
-                });
+            initWorldMap();
+            // Zufallspositionen für Ruinen & Haus
+            const rx = () => Math.floor(Math.random() * 18) + 1;
+            const ry = () => Math.floor(Math.random() * 18) + 1;
+            mapData[rx()][ry()] = { type: 'house', name: 'Haus des weisen Mannes' };
+            for(let i=0; i<4; i++) {
+                mapData[rx()][ry()] = { type: 'ruin', name: `Rätsel-Ruine #${i+1}`, solved: false };
             }
-            drawWorldMapGrid();
+            drawSectorGrid();
+            updatePreviews();
             inspectSector();
-            alert("🌍 Die Weltkarte wurde prozedural neu generiert!");
         }
 
-        // Party Rendering
-        function renderPartyStatus() {
-            const container = document.getElementById('party-mini-list');
-            container.innerHTML = '';
+        // SEKTOR BEWEGUNG
+        function moveSector(dx, dy) {
+            let newX = playerPos.x + dx;
+            let newY = playerPos.y + dy;
 
-            gameState.characters.forEach(hero => {
-                const card = document.createElement('div');
-                card.className = 'hero-mini-card';
-                card.innerHTML = `
-                    <div class="hero-name">${hero.name} (${hero.class})</div>
-                    <div class="hero-stats">❤️ HP: ${hero.hp}/${hero.maxHp} | 🛡️ AC: ${hero.ac}</div>
-                    <div class="hero-stats">💧 Elfen-Tropfen: ${hero.currency}</div>
+            if (newX < 1 || newX >= GRID_SIZE || newY < 0 || newY >= GRID_SIZE) return;
+            if (mapData[newX][newY].type === 'river') {
+                alert("Der Fluss ist zu reißend! Du kannst ihn nicht überqueren.");
+                return;
+            }
+
+            playerPos.x = newX;
+            playerPos.y = newY;
+            document.getElementById('sector-coords').innerText = `X: ${playerPos.x}, Y: ${playerPos.y}`;
+
+            drawSectorGrid();
+            updatePreviews();
+            inspectSector();
+        }
+
+        // CANVAS 15x15 RASTER ZEICHNEN
+        function drawSectorGrid() {
+            const canvas = document.getElementById('sectorCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const tileSize = 30; // 15 * 30 = 450px
+            ctx.strokeStyle = '#2b2d31';
+            ctx.lineWidth = 1;
+
+            for (let i = 0; i <= 15; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * tileSize, 0);
+                ctx.lineTo(i * tileSize, 450);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(0, i * tileSize);
+                ctx.lineTo(450, i * tileSize);
+                ctx.stroke();
+            }
+
+            // Sektor Feature Symbol
+            const current = mapData[playerPos.x][playerPos.y];
+            ctx.font = '40px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            let icon = '🌲';
+            if (current.type === 'house') icon = '🧙‍♂️';
+            if (current.type === 'ruin') icon = '🏛️';
+            if (current.type === 'shop') icon = '🛒';
+            if (current.type === 'monster') icon = '🐺';
+            if (current.type === 'npc') icon = '📜';
+
+            ctx.fillText(icon, 225, 225);
+
+            // Helden-Marker
+            ctx.fillStyle = '#5865f2';
+            ctx.beginPath();
+            ctx.arc(225, 270, 10, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // UMBEGEBUNGS-PREVIEWS
+        function updatePreviews() {
+            const getDesc = (x, y) => {
+                if (x < 1 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return 'Rand';
+                if (mapData[x][y].type === 'river') return '🌊 Fluss';
+                return mapData[x][y].name;
+            };
+
+            document.getElementById('preview-n').innerText = getDesc(playerPos.x, playerPos.y - 1);
+            document.getElementById('preview-o').innerText = getDesc(playerPos.x + 1, playerPos.y);
+            document.getElementById('preview-s').innerText = getDesc(playerPos.x, playerPos.y + 1);
+            document.getElementById('preview-w').innerText = getDesc(playerPos.x - 1, playerPos.y);
+        }
+
+        // SEKTOR INSPEKTION & RIGHT PANEL
+        function inspectSector() {
+            const current = mapData[playerPos.x][playerPos.y];
+            const panel = document.getElementById('sector-event-panel');
+            panel.innerHTML = '';
+
+            let html = `<h4 class="font-bold text-white text-md">${current.name}</h4>`;
+
+            if (current.type === 'monster') {
+                html += `
+                    <div class="bg-discordBg p-3 rounded border border-discordRed/40 space-y-2">
+                        <span class="text-discordRed font-bold text-sm block">⚠️ Gegner gesichtet!</span>
+                        <div class="text-xs text-discordMuted">HP: ${current.hp} | AC: ${current.ac}</div>
+                        <button onclick="attackMonster()" class="w-full bg-discordRed hover:opacity-90 text-white font-bold py-1.5 rounded text-xs">🗡️ Attackieren (d20)</button>
+                    </div>
                 `;
-                container.appendChild(card);
-            });
-        }
-
-        function renderClassOverview() {
-            const container = document.getElementById('class-overview-grid');
-            container.innerHTML = '';
-
-            Object.keys(classDefs).forEach(cName => {
-                const c = classDefs[cName];
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div class="card-header">${cName}</div>
-                    <p style="font-size:12px; color:var(--text-muted);">${c.desc}</p>
-                    <p style="font-size:12px; margin-top:6px;"><strong>Start-HP:</strong> ${c.hp} | <strong>Start-AC:</strong> ${c.ac}</p>
-                    <p style="font-size:12px;"><strong>Ausrüstung:</strong> ${c.gear.join(', ')}</p>
+            } else if (current.type === 'shop') {
+                html += `
+                    <div class="bg-discordBg p-3 rounded border border-amber-500/40 space-y-2 text-xs">
+                        <span class="text-amber-400 font-bold text-sm block">🛒 Wald-Shop</span>
+                        <p class="text-discordMuted">Währung: Elfen-Tropfen (💧)</p>
+                        <div class="space-y-1">
+                            <div class="flex justify-between items-center p-1 bg-black/20 rounded">
+                                <span>Heiltrank</span>
+                                <button onclick="buyItem('Heiltrank', 3)" class="bg-amber-600 text-white px-2 py-0.5 rounded">3 💧</button>
+                            </div>
+                            <div class="flex justify-between items-center p-1 bg-black/20 rounded">
+                                <span>Stärke-Trank (8h)</span>
+                                <button onclick="buyItem('Stärke-Trank (8h)', 5)" class="bg-amber-600 text-white px-2 py-0.5 rounded">5 💧</button>
+                            </div>
+                        </div>
+                    </div>
                 `;
-                container.appendChild(card);
-            });
+            } else if (current.type === 'npc') {
+                const quest = npcQuestTypes[Math.floor(Math.random() * npcQuestTypes.length)];
+                html += `
+                    <div class="bg-discordBg p-3 rounded border border-discordGreen/40 space-y-2 text-xs">
+                        <span class="text-discordGreen font-bold text-sm block">🎭 NPC Quest: ${quest.type}</span>
+                        <p class="text-discordText">${quest.desc}</p>
+                        <button onclick="completeNpcQuest()" class="w-full bg-discordGreen text-white font-bold py-1 rounded">Aufgabe gelöst (+3 💧)</button>
+                    </div>
+                `;
+            } else if (current.type === 'ruin') {
+                html += `
+                    <div class="bg-discordBg p-3 rounded border border-purple-500/40 space-y-2 text-xs">
+                        <span class="text-purple-400 font-bold text-sm block">🏛️ Rätsel-Ruine</span>
+                        <p class="text-discordMuted">Löse das Rätsel, um ein Fragment zu erhalten.</p>
+                        <button onclick="solveRuin()" class="w-full bg-purple-600 text-white font-bold py-1 rounded">Rätsel lösen</button>
+                    </div>
+                `;
+            } else {
+                html += `<p class="text-xs text-discordMuted">Ein ruhiger Abschnitt im Schattenwald.</p>`;
+            }
+
+            panel.innerHTML = html;
         }
 
+        // CHARAKTER LOGIK
         function createCharacter() {
             const name = document.getElementById('new-char-name').value;
-            const cClass = document.getElementById('new-char-class').value;
+            const cls = document.getElementById('new-char-class').value;
+            if (!name) return alert("Bitte Namen eingeben!");
 
-            if (!name) return alert("Bitte gib einen Namen ein!");
+            let hp = 10, ac = 12;
+            if (cls === 'Krieger') { hp = 12; ac = 16; }
+            if (cls === 'Magier') { hp = 6; ac = 11; }
+            if (cls === 'Schurke') { hp = 8; ac = 14; }
 
-            const cData = classDefs[cClass];
-            const newHero = {
-                id: Date.now(),
-                name: name,
-                class: cClass,
-                hp: cData.hp,
-                maxHp: cData.hp,
-                ac: cData.ac,
-                currency: 10,
-                inventory: [...cData.gear]
-            };
+            characters.push({
+                name, class: cls, hp, ac, drops: 5, inventory: ["Start-Heiltrank"]
+            });
 
-            gameState.characters.push(newHero);
             document.getElementById('new-char-name').value = '';
-            renderPartyStatus();
-            renderCharacterList();
+            renderCharacters();
         }
 
-        function deleteCharacter(id) {
-            gameState.characters = gameState.characters.filter(h => h.id !== id);
-            renderPartyStatus();
-            renderCharacterList();
-        }
+        function renderCharacters() {
+            const container = document.getElementById('character-cards-container');
+            const mapBar = document.getElementById('party-map-bar');
 
-        function renderCharacterList() {
-            const container = document.getElementById('character-full-list');
+            if (characters.length === 0) {
+                container.innerHTML = '<span class="text-sm text-discordMuted italic col-span-2">Noch keine Helden angelegt.</span>';
+                mapBar.innerHTML = '<span class="text-discordMuted italic">Keine Helden erstellt.</span>';
+                return;
+            }
+
             container.innerHTML = '';
+            mapBar.innerHTML = '';
 
-            gameState.characters.forEach(hero => {
-                const item = document.createElement('div');
-                item.className = 'card';
-                item.style.display = 'flex';
-                item.style.justifyContent = 'space-between';
-                item.style.alignItems = 'center';
-                item.innerHTML = `
-                    <div>
-                        <div class="card-header" style="margin-bottom: 4px;">${hero.name} - ${hero.class}</div>
-                        <p style="font-size:13px;">❤️ HP: ${hero.hp}/${hero.maxHp} | 🛡️ AC: ${hero.ac} | 💧 Elfen-Tropfen: ${hero.currency}</p>
-                        <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">🎒 Inventar: ${hero.inventory.join(', ')}</p>
+            characters.forEach((c, idx) => {
+                container.innerHTML += `
+                    <div class="bg-discordBg p-3 rounded border border-white/5 text-xs space-y-1">
+                        <div class="flex justify-between items-center font-bold text-white">
+                            <span>${c.name} (${c.class})</span>
+                            <button onclick="deleteChar(${idx})" class="text-discordRed">✖</button>
+                        </div>
+                        <div class="text-discordMuted">HP: ${c.hp} | AC: ${c.ac} | 💧 ${c.drops}</div>
+                        <div class="text-discordMuted">Inv: ${c.inventory.join(', ')}</div>
                     </div>
-                    <button class="btn btn-danger" style="height: fit-content;" onclick="deleteCharacter(${hero.id})">Löschen</button>
                 `;
-                container.appendChild(item);
+
+                mapBar.innerHTML += `
+                    <div class="bg-discordDark px-2 py-1 rounded border border-white/10 text-white">
+                        <strong>${c.name}</strong> (${c.class}) - HP: ${c.hp} | 💧 ${c.drops}
+                    </div>
+                `;
             });
         }
 
-        // Loot System
+        function deleteChar(idx) {
+            characters.splice(idx, 1);
+            renderCharacters();
+        }
+
+        // GAME LOGIC HELPERS
+        function buyItem(item, cost) {
+            if (characters.length === 0) return alert("Keine Helden vorhanden!");
+            if (characters[0].drops < cost) return alert("Nicht genug Elfen-Tropfen!");
+            characters[0].drops -= cost;
+            characters[0].inventory.push(item);
+            renderCharacters();
+            alert(`${item} gekauft!`);
+        }
+
+        function attackMonster() {
+            const roll = Math.floor(Math.random() * 20) + 1;
+            alert(`Gewürfelt: ${roll}! Monster besiegt.`);
+            mapData[playerPos.x][playerPos.y] = { type: 'forest', name: 'Dichter Schattenwald' };
+            inspectSector();
+        }
+
+        function completeNpcQuest() {
+            if (characters.length > 0) characters[0].drops += 3;
+            renderCharacters();
+            alert("Quest erfolgreich! +3 Elfen-Tropfen 💧 erhalten.");
+        }
+
+        function solveRuin() {
+            alert("Rätsel gelöst! Fragment erhalten.");
+            mapData[playerPos.x][playerPos.y].solved = true;
+            inspectSector();
+        }
+
+        function advanceTime(hrs) {
+            ingameTimeHours += hrs;
+            const days = Math.floor(ingameTimeHours / 24) + 1;
+            const h = ingameTimeHours % 24;
+            document.getElementById('clock-display').innerText = `Tag ${days} - ${h < 10 ? '0'+h : h}:00 Uhr`;
+        }
+
         function generateLoot(type) {
-            const pool = gameState.lootPools[type === 'mob' ? 'mobs' : (type === 'chest' ? 'chests' : 'npcs')];
+            const pool = lootPools[type];
             const item = pool[Math.floor(Math.random() * pool.length)];
+            document.getElementById('loot-result').innerText = `Gefunden: ${item}`;
+        }
 
-            document.getElementById('generated-loot-result').innerText = `✨ Generiertes Item: ${item}`;
-
-            if (gameState.characters.length > 0) {
-                gameState.characters[0].inventory.push(item);
-                renderPartyStatus();
-                renderCharacterList();
+        function addPoolItem() {
+            const val = document.getElementById('new-pool-item').value;
+            if (val) {
+                lootPools.mob.push(val);
+                document.getElementById('new-pool-item').value = '';
+                renderLootPoolList();
             }
         }
 
-        function loadSelectedPool() {
-            const sel = document.getElementById('loot-pool-select').value;
-            document.getElementById('loot-pool-editor').value = gameState.lootPools[sel].join('\n');
+        function renderLootPoolList() {
+            const list = document.getElementById('loot-pool-list');
+            list.innerHTML = lootPools.mob.map(i => `<div>• ${i}</div>`).join('');
         }
 
-        function saveSelectedPool() {
-            const sel = document.getElementById('loot-pool-select').value;
-            const lines = document.getElementById('loot-pool-editor').value.split('\n').filter(l => l.trim() !== '');
-            gameState.lootPools[sel] = lines;
-            alert("Pool erfolgreich gespeichert!");
+        // TAB SWITCHING
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-discordBlurple', 'text-white');
+                el.classList.add('text-discordMuted');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const btn = document.getElementById(`btn-tab-${tabId}`);
+            btn.classList.add('bg-discordBlurple', 'text-white');
+            btn.classList.remove('text-discordMuted');
         }
     </script>
 </body>
