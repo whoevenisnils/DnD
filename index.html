@@ -183,8 +183,8 @@
 
         .grid-15x15 {
             display: grid;
-            grid-template-columns: repeat(15, 20px);
-            grid-template-rows: repeat(15, 20px);
+            grid-template-columns: repeat(15, 22px);
+            grid-template-rows: repeat(15, 22px);
             gap: 1px;
             background-color: #111214;
             padding: 4px;
@@ -198,20 +198,20 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
+            font-size: 11px;
         }
 
         .grid-cell.river { background-color: var(--river-blue); }
         .grid-cell.house { background-color: var(--sage-house); }
         .grid-cell.ruin { background-color: var(--puzzle-ruin); }
-        .grid-cell.player { border: 2px solid #23a55a; }
+        .grid-cell.player { border: 2px solid #23a55a; background-color: rgba(35, 165, 90, 0.2); }
 
         /* Navigation Controls */
         .controls-nav {
             display: grid;
             grid-template-columns: repeat(3, 50px);
             gap: 5px;
-            margin-top: 10px;
+            margin-top: 12px;
             justify-content: center;
         }
 
@@ -246,7 +246,7 @@
             padding: 8px 12px;
             border-radius: 6px;
             border: 1px solid var(--border-color);
-            min-width: 140px;
+            min-width: 150px;
         }
 
         .hero-name { font-weight: bold; font-size: 14px; color: var(--accent-purple); }
@@ -740,6 +740,12 @@
             renderCharacterList();
         }
 
+        function deleteCharacter(id) {
+            gameState.characters = gameState.characters.filter(h => h.id !== id);
+            renderPartyStatus();
+            renderCharacterList();
+        }
+
         function renderCharacterList() {
             const container = document.getElementById('character-full-list');
             container.innerHTML = '';
@@ -747,10 +753,16 @@
             gameState.characters.forEach(hero => {
                 const item = document.createElement('div');
                 item.className = 'card';
+                item.style.display = 'flex';
+                item.style.justify0content = 'space-between';
+                item.style.alignItems = 'center';
                 item.innerHTML = `
-                    <div class="card-header">${hero.name} - ${hero.class}</div>
-                    <p style="font-size:13px;">❤️ HP: ${hero.hp}/${hero.maxHp} | 🛡️ AC: ${hero.ac} | 💧 Elfen-Tropfen: ${hero.currency}</p>
-                    <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">🎒 Inventar: ${hero.inventory.join(', ')}</p>
+                    <div>
+                        <div class="card-header" style="margin-bottom: 4px;">${hero.name} - ${hero.class}</div>
+                        <p style="font-size:13px;">❤️ HP: ${hero.hp}/${hero.maxHp} | 🛡️ AC: ${hero.ac} | 💧 Elfen-Tropfen: ${hero.currency}</p>
+                        <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">🎒 Inventar: ${hero.inventory.join(', ')}</p>
+                    </div>
+                    <button class="btn btn-danger" style="height: fit-content;" onclick="deleteCharacter(${hero.id})">Löschen</button>
                 `;
                 container.appendChild(item);
             });
