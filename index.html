@@ -163,7 +163,7 @@
             align-items: center;
         }
 
-        /* World Map & Grid */
+        /* World Map 20x20 Grid */
         .sector-view-container {
             display: flex;
             flex-direction: column;
@@ -181,10 +181,10 @@
             color: var(--accent-purple);
         }
 
-        .grid-15x15 {
+        .grid-20x20 {
             display: grid;
-            grid-template-columns: repeat(15, 22px);
-            grid-template-rows: repeat(15, 22px);
+            grid-template-columns: repeat(20, 22px);
+            grid-template-rows: repeat(20, 22px);
             gap: 1px;
             background-color: #111214;
             padding: 4px;
@@ -198,13 +198,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 10px;
         }
 
         .grid-cell.river { background-color: var(--river-blue); }
         .grid-cell.house { background-color: var(--sage-house); }
         .grid-cell.ruin { background-color: var(--puzzle-ruin); }
-        .grid-cell.player { border: 2px solid #23a55a; background-color: rgba(35, 165, 90, 0.2); }
+        .grid-cell.player { border: 2px solid #23a55a; background-color: rgba(35, 165, 90, 0.3); }
 
         /* Navigation Controls */
         .controls-nav {
@@ -299,7 +299,7 @@
             <span>🛡️ DM-Steuerzentrale</span>
         </div>
         <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('map-tab')">🗺️ Weltkarte & Sektor</button>
+            <button class="tab-btn active" onclick="switchTab('map-tab')">🗺️ 20x20 Weltkarte</button>
             <button class="tab-btn" onclick="switchTab('chars-tab')">👥 Charaktere & Klassen</button>
             <button class="tab-btn" onclick="switchTab('loot-tab')">💎 Loot- & Beute-Pools</button>
             <button class="tab-btn" onclick="switchTab('notes-tab')">📜 Hauptplot & Spickzettel</button>
@@ -318,8 +318,8 @@
             <div class="map-section">
                 <div class="sector-view-container">
                     <div id="sector-coordinates" class="sector-title">Sektor [X: 1, Y: 0] - Schattenwald</div>
-                    <!-- 15x15 Grid View -->
-                    <div id="sector-grid" class="grid-15x15"></div>
+                    <!-- 20x20 World Map Grid View -->
+                    <div id="world-map-grid" class="grid-20x20"></div>
                     
                     <!-- 4-Button Movement Controls -->
                     <div class="controls-nav">
@@ -478,7 +478,6 @@
             playerX: 1,
             playerY: 0,
             worldGridSize: 20,
-            sectorGridSize: 15,
             sageHouse: { x: 10, y: 10 },
             ruins: [
                 { x: 3, y: 4, solved: false },
@@ -525,7 +524,7 @@
 
         window.onload = function() {
             renderClassOverview();
-            drawSectorGrid();
+            drawWorldMapGrid();
             renderPartyStatus();
             renderCharacterList();
             loadSelectedPool();
@@ -540,36 +539,42 @@
             document.getElementById(tabId).classList.add('active');
         }
 
-        // Sector Grid Rendering (15x15)
-        function drawSectorGrid() {
-            const container = document.getElementById('sector-grid');
+        // Complete 20x20 World Map Grid Rendering
+        function drawWorldMapGrid() {
+            const container = document.getElementById('world-map-grid');
             container.innerHTML = '';
 
             document.getElementById('sector-coordinates').innerText = 
                 `Sektor [X: ${gameState.playerX}, Y: ${gameState.playerY}] - Schattenwald`;
 
-            const isRiver = (gameState.playerX === 0);
-            const isHouse = (gameState.playerX === gameState.sageHouse.x && gameState.playerY === gameState.sageHouse.y);
-            const isRuin = gameState.ruins.some(r => r.x === gameState.playerX && r.y === gameState.playerY);
+            for (let y = 0; y < gameState.worldGridSize; y++) {
+                for (let x = 0; x < gameState.worldGridSize; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
 
-            for (let i = 0; i < 225; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'grid-cell';
+                    const isRiver = (x === 0);
+                    const isHouse = (x === gameState.sageHouse.x && y === gameState.sageHouse.y);
+                    const isRuin = gameState.ruins.some(r => r.x === x && r.y === y);
+                    const isPlayer = (x === gameState.playerX && y === gameState.playerY);
 
-                if (isRiver) {
-                    cell.classList.add('river');
-                } else if (isHouse && i === 112) {
-                    cell.classList.add('house');
-                    cell.innerText = '🏠';
-                } else if (isRuin && i === 112) {
-                    cell.classList.add('ruin');
-                    cell.innerText = '🏛️';
-                } else if (i === 112) {
-                    cell.classList.add('player');
-                    cell.innerText = '⚔️';
+                    if (isRiver) {
+                        cell.classList.add('river');
+                    }
+                    if (isHouse) {
+                        cell.classList.add('house');
+                        cell.innerText = '🏠';
+                    }
+                    if (isRuin) {
+                        cell.classList.add('ruin');
+                        cell.innerText = '🏛️';
+                    }
+                    if (isPlayer) {
+                        cell.classList.add('player');
+                        cell.innerText = '⚔️';
+                    }
+
+                    container.appendChild(cell);
                 }
-
-                container.appendChild(cell);
             }
         }
 
@@ -591,7 +596,7 @@
             gameState.playerX = newX;
             gameState.playerY = newY;
 
-            drawSectorGrid();
+            drawWorldMapGrid();
             inspectSector();
         }
 
@@ -676,7 +681,7 @@
                     solved: false
                 });
             }
-            drawSectorGrid();
+            drawWorldMapGrid();
             inspectSector();
             alert("🌍 Die Weltkarte wurde prozedural neu generiert!");
         }
@@ -754,7 +759,7 @@
                 const item = document.createElement('div');
                 item.className = 'card';
                 item.style.display = 'flex';
-                item.style.justify0content = 'space-between';
+                item.style.justifyContent = 'space-between';
                 item.style.alignItems = 'center';
                 item.innerHTML = `
                     <div>
